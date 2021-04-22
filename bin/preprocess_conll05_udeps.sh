@@ -16,29 +16,30 @@ sed 's/\(.*\)\t\(.*\)\*\(.*\)/\2(\1)\3/' > "$input_file.parse"
 # Now convert those parses to dependencies
 # Output will have the extension .dep
 echo "Converting to dependencies: $input_file.parse"
-java -Xmx8g -cp $STANFORD_CP edu.stanford.nlp.trees.EnglishGrammaticalStructure \
-    -treeFile "$input_file.parse" -basic -conllx -keepPunct -makeCopulaHead > "$input_file.parse.sdeps"
+java -Xmx8g -cp $STANFORD_CP edu.stanford.nlp.trees.ud.UniversalDependenciesConverter -treeFile "$input_file.parse" -basic> "$input_file.parse.udeps"
+#java -Xmx8g -cp $STANFORD_CP edu.stanford.nlp.trees.EnglishGrammaticalStructure \
+#    -treeFile "$input_file.parse" -basic -conllx -keepPunct -makeCopulaHead > "$input_file.parse.udeps"
 
 # Now assign auto part-of-speech tags
 # Output will have extension .tagged
-echo "POS tagging: $input_file.parse.sdeps"
+echo "POS tagging: $input_file.parse.udeps"
 
 # need to convert to text format Stanford likes
-awk '{if(NF){printf "%s ", $2} else{ print "" }}' "$input_file.parse.sdeps" > "$input_file.parse.sdeps.posonly"
+awk '{if(NF){printf "%s ", $2} else{ print "" }}' "$input_file.parse.udeps" > "$input_file.parse.udeps.posonly"
 
 java -Xmx8g -cp $STANFORD_CP edu.stanford.nlp.tagger.maxent.MaxentTagger \
     -model $postagger_model \
-    -textFile "$input_file.parse.sdeps.posonly" \
+    -textFile "$input_file.parse.udeps.posonly" \
     -tokenize false \
     -outputFormat tsv \
     -sentenceDelimiter newline \
-    > "$input_file.parse.sdeps.pos"
+    > "$input_file.parse.udeps.pos"
 
-echo "Combining: $input_file.parse.sdeps, $input_file.parse.sdeps.pos"
+echo "Combining: $input_file.parse.udeps, $input_file.parse.udeps.pos"
 
 # Finally, paste the original file together with the dependency parses and auto pos tags
-f_converted="$input_file.parse.sdeps"
-f_pos="$input_file.parse.sdeps.pos"
+f_converted="$input_file.parse.udeps"
+f_pos="$input_file.parse.udeps.pos"
 f_combined="$f_converted.combined"
 
 # docid is conll05

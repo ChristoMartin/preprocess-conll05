@@ -18,9 +18,12 @@ with open(args.input_file, 'r') as f:
   label_stack = []
   for line_num, line in enumerate(f):
     new_labels = []
-    split_line = line.strip().split()
+    split_line = line.strip().split('\t')
     last_field = len(split_line) - (0 if args.take_last else 1)
+    # print(line)
     if not split_line:
+      # if not label_stack:
+      #   print("There remains an unclosed paren (line %d) labels: %s" % (line_num, ','.join(label_stack)))
       assert not label_stack, "There remains an unclosed paren (line %d) labels: %s" % (line_num, ','.join(label_stack))
     elif args.field < last_field:
       field = split_line[args.field]
@@ -53,7 +56,11 @@ with open(args.input_file, 'r') as f:
           if args.bilou:
             close_labels = ["L-" + label_stack.pop(-1) for i in range(close_parens)][::-1]
           else:
-            close_labels = ["I-" + label_stack.pop(-1) for i in range(close_parens)][::-1]
+            try:
+              close_labels = ["I-" + label_stack.pop(-1) for i in range(close_parens)][::-1]
+            except Exception :
+              print("HERE!")
+              print(label_stack)
 
         # add unclosed new labels to label stack, and begin them
         start_labels = []

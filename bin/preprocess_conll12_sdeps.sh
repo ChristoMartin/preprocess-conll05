@@ -9,10 +9,10 @@ input_file=$1
 echo "Extracting trees from: $input_file"
 # word pos parse -> stick words, pos into parse as terminals
 # gsub(/#/, "$", $1); gsub(/#/, "$", $2);
-zcat $input_file | \
-awk '{gsub(/\(/, "-LRB-", $1); gsub(/\)/, "-RRB-", $1); gsub(/\(/, "-LRB-", $2); gsub(/\)/, "-RRB-", $2); print $2" "$1"\t"$3}' | \
+cat $input_file.gold_parse | \
+#awk '{gsub(/\(/, "-LRB-", $1); gsub(/\)/, "-RRB-", $1); gsub(/\(/, "-LRB-", $2); gsub(/\)/, "-RRB-", $2); print $2" "$1"\t"$3}' | \
 sed 's/\(.*\)\t\(.*\)\*\(.*\)/\2(\1)\3/' > "$input_file.parse"
-
+#cat $input_file > $input_file.parse
 # Now convert those parses to dependencies
 # Output will have the extension .dep
 echo "Converting to dependencies: $input_file.parse"
@@ -42,10 +42,10 @@ f_pos="$input_file.parse.sdeps.pos"
 f_combined="$f_converted.combined"
 
 # docid is conll05
-paste <(zcat $input_file | awk 'BEGIN{s=0;c=0}{if(NF == 0){print ""; c=0; s++} else {print "conll05\t"s"\t"c++"\t"$1}}' ) \
+paste <(cat $input_file.gold_conll | awk 'BEGIN{s=0;c=0}{if(NF == 0){print ""; c=0; s++} else {print "conll12\t"s"\t"c++"\t"$4}}' ) \
     <(awk '{print $5}' $f_converted) \
     <(awk '{print $2}' $f_pos) \
     <(awk '{if(NF == 0){print ""} else {print $7"\t"$8"\t_"}}' $f_converted) \
-    <(zcat $input_file | awk '{if(NF == 0){print ""} else {print $5"\t"$6"\t-\t-\t"$4}}' ) \
-    <(zcat $input_file | awk '{if(NF == 0){print ""} else {print $0}}' | tr -s ' ' | cut -d' ' -f7- | sed 's/ /\t/g') \
+    <(cat $input_file.gold_conll | awk '{if(NF == 0){print ""} else {print $8"\t"$7"\t-\t-\t"$11}}' ) \
+    <(cat $input_file.gold_conll | awk '{if(NF == 0){print ""} else {$(NF--)=""; print}}'  | tr -s ' ' | cut -d' ' -f11- | sed 's/ /\t/g') \
 > $f_combined
